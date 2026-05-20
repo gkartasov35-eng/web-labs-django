@@ -29,7 +29,7 @@
     {% endblock %}
 </div>
 
-<!-- Скрипты -->
+<!-- Скрипты отдельных страниц -->
 {% block scripts %}
 {% endblock %}
 
@@ -37,5 +37,9 @@
 .message.success { color: green; }
 .message.error { color: red; }
 </style>
+
+<!-- Общий JS для проверки формы -->
+<script src="{% static 'main/js/form_validation.js' %}"></script>
+
 </body>
 </html>
