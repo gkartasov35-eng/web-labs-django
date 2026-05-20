@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>🎮 GameWorld</h1>
+
+<div class="card">
+    <h2>Cyber Adventure</h2>
+    <p>RPG игра будущего.</p>
+    <button>Играть</button>
+</div>
+
+<div class="card">
+    <h2>Space Battle</h2>
+    <p>Космический шутер.</p>
+    <button>Подробнее</button>
+</div>
+
+<div class="content">
+    <h2>Посты с like/dislike</h2>
+
+    {% for post in posts %}
+        <div class="card post-card" data-post-id="{{ post.id }}">
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.content }}</p>
+
+            <button class="reaction-btn" data-value="true">👍 Like</button>
+            <span>Лайков: <b class="likes-count">{{ post.likes_count|default:0 }}</b></span>
+
+            <button class="reaction-btn" data-value="false">👎 Dislike</button>
+            <span>Дизлайков: <b class="dislikes-count">{{ post.dislikes_count|default:0 }}</b></span>
+        </div>
+    {% empty %}
+        <p>Постов пока нет. После миграций будут созданы тестовые записи.</p>
+    {% endfor %}
+</div>
+
+<div class="content">
+    <h2>Обратная связь</h2>
+    <form id="feedbackForm" method="post" novalidate>
+        {% csrf_token %}
+
+        <label for="name">Имя:</label>
+        <input type="text" name="name" id="name" placeholder="Введите имя" required>
+
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" placeholder="Введите email" required>
+
+        <label for="message">Сообщение:</label>
+        <textarea name="message" id="message" placeholder="Ваше сообщение" required minlength="5"></textarea>
+
+        <button type="submit">Отправить</button>
+    </form>
+    <p id="statusMessage"></p>
+</div>
+
+<script>
+const form = document.getElementById('feedbackForm');
+const statusMessage = document.getElementById('statusMessage');
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+form.addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    if (!form.checkValidity()) {
+        statusMessage.textContent = "Пожалуйста, заполните все поля корректно.";
+        statusMessage.style.color = "red";
+        return;
+    }
+
+    const payload = {
+        name: form.elements.name.value,
+        email: form.elements.email.value,
+        message: form.elements.message.value
+    };
+
+    const response = await fetch("{% url 'feedback' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    statusMessage.textContent = result.message;
+    statusMessage.style.color = response.ok ? "green" : "red";
+
+    if (response.ok) {
+        form.reset();
+    }
+});
+
+// Like/dislike отправляется через fetch: меняется только счётчик, без перезагрузки страницы.
+document.querySelectorAll('.reaction-btn').forEach(button => {
+    button.addEventListener('click', async function() {
+        const card = button.closest('.post-card');
+        const formData = new FormData();
+        formData.append('post_id', card.dataset.postId);
+        formData.append('value', button.dataset.value);
+
+        const response = await fetch("{% url 'like_dislike' %}", {
+            method: "POST",
+            headers: { "X-CSRFToken": csrfToken },
+            body: formData
+        });
+
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+
+        if (response.ok) {
+            const data = await response.json();
+            updatePostCounters(data.post_id, data.likes, data.dislikes);
+        }
+    });
+});
+
+function updatePostCounters(postId, likes, dislikes) {
+    const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+    if (!card) return;
+    card.querySelector('.likes-count').textContent = likes;
+    card.querySelector('.dislikes-count').textContent = dislikes;
+}
+
+async function refreshReactions() {
+    const response = await fetch("{% url 'post_reactions' %}");
+    if (!response.ok) return;
+
+    const data = await response.json();
+    data.posts.forEach(post => {
+        updatePostCounters(post.id, post.likes_count, post.dislikes_count);
+    });
+}
+
+setInterval(refreshReactions, 5000);
+</script>
+{% endblock %}

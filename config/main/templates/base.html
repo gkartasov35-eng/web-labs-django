@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GameWorld</title>
+    <!-- Основной CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<!-- Меню -->
+<div class="menu">
+    <a href="/auth/">Регистрация</a>
+    <a href="/">Главная</a>
+    <a href="/about/">О сайте</a>
+    <a href="/games/">Игры</a>
+    <a href="/feedback/">Обратная связь</a>
+</div>
+
+<!-- Основной контент -->
+<div class="content">
+    {% if messages %}
+        {% for message in messages %}
+            <p class="message {{ message.tags }}">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+    {% block content %}
+    {% endblock %}
+</div>
+
+<!-- Скрипты -->
+{% block scripts %}
+{% endblock %}
+
+<style>
+.message.success { color: green; }
+.message.error { color: red; }
+</style>
+</body>
+</html>

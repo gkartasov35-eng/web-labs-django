@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Регистрация</h2>
+<p>После отправки формы пользователь будет создан в базе данных, а пароль сохранится в зашифрованном виде.</p>
+
+{% if messages %}
+    {% for message in messages %}
+        <p class="message {{ message.tags }}">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+
+<form id="authForm" method="post" novalidate>
+    {% csrf_token %}
+
+    {% for field in form %}
+        <div class="form-row">
+            <label for="{{ field.id_for_label }}">{{ field.label }}:</label><br>
+            {{ field }}
+            {% if field.help_text %}
+                <small>{{ field.help_text|safe }}</small>
+            {% endif %}
+            {% for error in field.errors %}
+                <p class="error-message">{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    {% for error in form.non_field_errors %}
+        <p class="error-message">{{ error }}</p>
+    {% endfor %}
+
+    <button type="submit">Зарегистрироваться</button>
+</form>
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 0.9em;
+        margin-top: 4px;
+        margin-bottom: 8px;
+    }
+    .message.success {
+        color: green;
+    }
+    .message.error {
+        color: red;
+    }
+    .form-row {
+        margin-bottom: 12px;
+    }
+    input {
+        min-width: 280px;
+        padding: 8px;
+    }
+</style>
+{% endblock %}

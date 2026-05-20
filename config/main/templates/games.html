@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>🎮 Список игр</h1>
+
+<h2>Фото игры</h2>
+<img src="https://avatars.mds.yandex.net/i?id=28aa14e9c4a77e02483d583b7880e08fb5627d73-4144443-images-thumbs&n=13" alt="Game Image">
+
+<h2>Видео</h2>
+<a href="https://yandex.ru/video/preview/980961884437470289" target="_blank">
+  Смотреть видео
+</a>
+
+<h2>Таблица игр</h2>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Название</th>
+        <th>Жанр</th>
+        <th>Год</th>
+        <th>Студия</th>
+    </tr>
+    <tr>
+        <td>Cyber Adventure</td>
+        <td>RPG</td>
+        <td>2025</td>
+    </tr>
+    <tr>
+        <td>Space Battle</td>
+        <td>Шутер</td>
+        <td>2024</td>
+    </tr>
+</table>
+
+{% endblock %}
