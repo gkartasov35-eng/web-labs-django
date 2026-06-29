@@ -135,3 +135,23 @@ button:hover {
     font-weight: bold;
     text-align: center;
 }
+
+.game-image,
+.game-video {
+    width: 100%;
+    max-width: 520px;
+    display: block;
+    margin: 10px 0 22px;
+    border-radius: 8px;
+    border: 1px solid #d7dde5;
+    background: #eef4fb;
+}
+
+.game-image {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+}
+
+.game-video {
+    aspect-ratio: 16 / 9;
+}

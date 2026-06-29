@@ -1,16 +1,18 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 
 <h1>🎮 Список игр</h1>
 
 <h2>Фото игры</h2>
-<img src="https://avatars.mds.yandex.net/i?id=28aa14e9c4a77e02483d583b7880e08fb5627d73-4144443-images-thumbs&n=13" alt="Game Image">
+<img class="game-image" src="{% static 'main/img/game-cover.svg' %}" alt="Обложка игры GameWorld">
 
 <h2>Видео</h2>
-<a href="https://yandex.ru/video/preview/980961884437470289" target="_blank">
-  Смотреть видео
-</a>
+<video class="game-video" controls poster="{% static 'main/img/game-cover.svg' %}">
+    <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+    Ваш браузер не поддерживает видео.
+</video>
 
 <h2>Таблица игр</h2>
 
@@ -19,16 +21,19 @@
         <th>Название</th>
         <th>Жанр</th>
         <th>Год</th>
+        <th>Студия</th>
     </tr>
     <tr>
         <td>Cyber Adventure</td>
         <td>RPG</td>
         <td>2025</td>
+        <td>GameWorld Studio</td>
     </tr>
     <tr>
         <td>Space Battle</td>
         <td>Шутер</td>
         <td>2024</td>
+        <td>Orbit Games</td>
     </tr>
 </table>
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">GameWorld cover</title>
+  <desc id="desc">Bright game cover with a controller and game cards.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b7cff"/>
+      <stop offset="0.52" stop-color="#2fbf9f"/>
+      <stop offset="1" stop-color="#ffd166"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.72"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <circle cx="785" cy="92" r="62" fill="#ffffff" opacity="0.28"/>
+  <circle cx="115" cy="424" r="88" fill="#ffffff" opacity="0.18"/>
+  <path d="M0 390 C140 330 250 420 390 360 C560 286 673 336 960 250 L960 540 L0 540 Z" fill="#13233a" opacity="0.2"/>
+  <rect x="105" y="88" width="750" height="356" rx="34" fill="url(#panel)"/>
+  <text x="148" y="174" font-family="Arial, sans-serif" font-size="62" font-weight="700" fill="#1d2b3a">GameWorld</text>
+  <text x="151" y="224" font-family="Arial, sans-serif" font-size="25" fill="#3f4f63">Cyber Adventure and Space Battle</text>
+  <rect x="151" y="278" width="250" height="98" rx="18" fill="#0b7cff"/>
+  <text x="183" y="338" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#fff">RPG 2025</text>
+  <rect x="434" y="278" width="250" height="98" rx="18" fill="#27364a"/>
+  <text x="466" y="338" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#fff">Shooter</text>
+  <g transform="translate(650 116)">
+    <path d="M43 91 C21 91 6 76 0 54 C-6 30 8 10 31 11 L63 13 C72 14 80 14 89 13 L121 11 C144 10 158 30 152 54 C146 76 131 91 109 91 C92 91 91 78 76 78 C61 78 60 91 43 91Z" fill="#1d2b3a"/>
+    <circle cx="42" cy="47" r="10" fill="#ffd166"/>
+    <circle cx="116" cy="35" r="8" fill="#2fbf9f"/>
+    <circle cx="132" cy="52" r="8" fill="#ff5c7a"/>
+    <rect x="65" y="39" width="20" height="9" rx="4" fill="#fff"/>
+  </g>
+</svg>
