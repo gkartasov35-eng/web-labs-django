@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var form = document.getElementById('authForm'); // id вашей формы
+    var form = document.getElementById('authForm');
+    if (!form) return;
     var inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]');
-    var submit = form.querySelector('button[type="submit"]');
 
     // Конструктор валидатора для одного поля
     function CustomValidation() {
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (input.required && val === '') this.addInvalidity('Поле обязательно для заполнения');
 
             // специальные проверки
-            if (name === 'firstName' || name === 'lastName') {
+            if (name === 'first_name' || name === 'last_name') {
                 if (!/^[A-ZА-ЯЁ][a-zа-яё]+$/.test(val)) {
                     this.addInvalidity('Должно начинаться с заглавной буквы и содержать только буквы');
                 }
@@ -36,7 +36,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (type === 'password') {
-                if (val.length < 6) this.addInvalidity('Пароль минимум 6 символов');
+                if (val.length < 8) this.addInvalidity('Пароль минимум 8 символов');
+                if (name === 'password2' && input.value !== form.elements.password1.value) {
+                    this.addInvalidity('Пароли не совпадают');
+                }
             }
         },
         addInvalidity: function(msg) { this.invalidities.push(msg); },
@@ -45,12 +48,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // удаляем все старые ошибки
     function removeOldErrors() {
-        var old = document.querySelectorAll('.error-message');
+        var old = form.querySelectorAll('.error-message');
         old.forEach(function(e){ e.remove(); });
     }
 
     // при отправке формы
-    submit.addEventListener('click', function(e) {
+    form.addEventListener('submit', function(e) {
         removeOldErrors();
         var stopSubmit = false;
 
