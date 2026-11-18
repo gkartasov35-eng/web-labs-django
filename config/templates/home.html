@@ -23,11 +23,12 @@
             <h3>{{ post.title }}</h3>
             <p>{{ post.content }}</p>
 
-            <button class="reaction-btn" data-value="true">👍 Like</button>
+            <button class="reaction-btn" data-value="true" aria-pressed="false">👍 Like</button>
             <span>Лайков: <b class="likes-count">{{ post.likes_count|default:0 }}</b></span>
 
-            <button class="reaction-btn" data-value="false">👎 Dislike</button>
+            <button class="reaction-btn" data-value="false" aria-pressed="false">👎 Dislike</button>
             <span>Дизлайков: <b class="dislikes-count">{{ post.dislikes_count|default:0 }}</b></span>
+            <p class="reaction-status" aria-live="polite"></p>
         </div>
     {% empty %}
         <p>Постов пока нет. После миграций будут созданы тестовые записи.</p>
@@ -96,24 +97,41 @@ form.addEventListener('submit', async function(event) {
 document.querySelectorAll('.reaction-btn').forEach(button => {
     button.addEventListener('click', async function() {
         const card = button.closest('.post-card');
-        const formData = new FormData();
-        formData.append('post_id', card.dataset.postId);
-        formData.append('value', button.dataset.value);
+        const buttons = card.querySelectorAll('.reaction-btn');
+        const status = card.querySelector('.reaction-status');
+        const payload = {
+            post_id: Number(card.dataset.postId),
+            value: button.dataset.value === 'true'
+        };
 
-        const response = await fetch("{% url 'like_dislike' %}", {
-            method: "POST",
-            headers: { "X-CSRFToken": csrfToken },
-            body: formData
-        });
+        buttons.forEach(item => item.disabled = true);
+        status.textContent = '';
+        try {
+            const response = await fetch("{% url 'like_dislike' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify(payload)
+            });
 
-        if (response.redirected) {
-            window.location.href = response.url;
-            return;
-        }
+            if (response.redirected) {
+                window.location.assign(response.url);
+                return;
+            }
 
-        if (response.ok) {
             const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Не удалось сохранить реакцию.');
+            }
             updatePostCounters(data.post_id, data.likes, data.dislikes);
+            updatePostReaction(data.post_id, data.user_reaction);
+        } catch (error) {
+            status.textContent = error.message || 'Не удалось связаться с сервером.';
+        } finally {
+            buttons.forEach(item => item.disabled = false);
         }
     });
 });
@@ -125,16 +143,33 @@ function updatePostCounters(postId, likes, dislikes) {
     card.querySelector('.dislikes-count').textContent = dislikes;
 }
 
-async function refreshReactions() {
-    const response = await fetch("{% url 'post_reactions' %}");
-    if (!response.ok) return;
+function updatePostReaction(postId, reaction) {
+    const card = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+    if (!card) return;
 
-    const data = await response.json();
-    data.posts.forEach(post => {
-        updatePostCounters(post.id, post.likes_count, post.dislikes_count);
+    card.querySelectorAll('.reaction-btn').forEach(button => {
+        const selected = reaction !== null && button.dataset.value === String(reaction);
+        button.classList.toggle('is-active', selected);
+        button.setAttribute('aria-pressed', String(selected));
     });
 }
 
+async function refreshReactions() {
+    try {
+        const response = await fetch("{% url 'post_reactions' %}", { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        data.posts.forEach(post => {
+            updatePostCounters(post.id, post.likes_count, post.dislikes_count);
+            updatePostReaction(post.id, post.user_reaction);
+        });
+    } catch (error) {
+        // Keep the last displayed counts when the server is temporarily unreachable.
+    }
+}
+
+refreshReactions();
 setInterval(refreshReactions, 5000);
 </script>
 {% endblock %}

@@ -5,7 +5,8 @@ import requests
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import BooleanField, Count, OuterRef, Q, Subquery, Value
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
@@ -44,16 +45,22 @@ def send_telegram_message(text):
     return True
 
 
-def get_posts_with_reactions():
-    # Счётчики сразу подтягиваются из БД, чтобы при загрузке страницы не было нулей.
-    return Post.objects.annotate(
-        likes_count=Count('likedislike', filter=Q(likedislike__value=True)),
-        dislikes_count=Count('likedislike', filter=Q(likedislike__value=False)),
-    )
+def get_posts_with_reactions(user=None):
+    annotations = {
+        'likes_count': Count('likedislike', filter=Q(likedislike__value=True)),
+        'dislikes_count': Count('likedislike', filter=Q(likedislike__value=False)),
+    }
+    if user is not None and user.is_authenticated:
+        annotations['user_reaction'] = Subquery(
+            LikeDislike.objects.filter(user=user, post_id=OuterRef('pk')).values('value')[:1]
+        )
+    else:
+        annotations['user_reaction'] = Value(None, output_field=BooleanField())
+    return Post.objects.annotate(**annotations)
 
 
 def home(request):
-    posts = get_posts_with_reactions()
+    posts = get_posts_with_reactions(request.user)
     return render(request, 'home.html', {'posts': posts})
 
 
@@ -118,27 +125,62 @@ def feedback(request):
 @login_required
 @require_POST
 def like_dislike(request):
-    post_id = request.POST.get("post_id")
-    value_raw = request.POST.get("value")
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({"error": "Некорректный JSON."}, status=400)
 
-    if post_id is None or value_raw is None:
-        return JsonResponse({"error": "Не переданы обязательные данные"}, status=400)
+    if not isinstance(data, dict):
+        return JsonResponse({"error": "Ожидался JSON-объект."}, status=400)
+
+    post_id = data.get("post_id")
+    value = data.get("value")
+    if type(post_id) is not int or post_id < 1 or type(value) is not bool:
+        return JsonResponse({"error": "Нужны целочисленный post_id и логическое value."}, status=400)
 
     post = get_object_or_404(Post, id=post_id)
-    value = value_raw.lower() == "true"
 
-    LikeDislike.objects.update_or_create(
-        user=request.user,
-        post=post,
-        defaults={"value": value}
-    )
+    with transaction.atomic():
+        reaction = LikeDislike.objects.select_for_update().filter(
+            user=request.user,
+            post=post,
+        ).first()
+        created = False
+        if reaction is None:
+            reaction, created = LikeDislike.objects.get_or_create(
+                user=request.user,
+                post=post,
+                defaults={"value": value},
+            )
+            if not created:
+                reaction = LikeDislike.objects.select_for_update().get(pk=reaction.pk)
 
-    likes = LikeDislike.objects.filter(post=post, value=True).count()
-    dislikes = LikeDislike.objects.filter(post=post, value=False).count()
+        if created:
+            user_reaction = value
+        elif reaction.value == value:
+            reaction.delete()
+            user_reaction = None
+        else:
+            reaction.value = value
+            reaction.save(update_fields=["value"])
+            user_reaction = value
 
-    return JsonResponse({"post_id": post.id, "likes": likes, "dislikes": dislikes})
+    counts = Post.objects.filter(pk=post.pk).annotate(
+        likes_count=Count('likedislike', filter=Q(likedislike__value=True)),
+        dislikes_count=Count('likedislike', filter=Q(likedislike__value=False)),
+    ).values('likes_count', 'dislikes_count').get()
+
+    return JsonResponse({
+        "post_id": post.id,
+        "likes": counts['likes_count'],
+        "dislikes": counts['dislikes_count'],
+        "user_reaction": user_reaction,
+    })
 
 
+@require_http_methods(["GET"])
 def post_reactions(request):
-    posts = get_posts_with_reactions().values('id', 'likes_count', 'dislikes_count')
+    posts = get_posts_with_reactions(request.user).values(
+        'id', 'likes_count', 'dislikes_count', 'user_reaction'
+    )
     return JsonResponse({"posts": list(posts)})
