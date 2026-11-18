@@ -1,0 +1,45 @@
+<table border="1" cellpadding="10">
+    <tr>
+        <th scope="col">Название</th>
+        <th scope="col">Жанр</th>
+        <th scope="col">Год</th>
+        <th scope="col">Студия</th>
+        <th scope="col">Лайки</th>
+        <th scope="col">Дизлайки</th>
+    </tr>
+    {% for title, genre, year, studio, post in games %}
+    <tr{% if post %} data-post-id="{{ post.pk }}"{% endif %}>
+        <td>{{ title }}</td>
+        <td>{{ genre }}</td>
+        <td>{{ year }}</td>
+        <td>{{ studio }}</td>
+        <td class="likes-count">{% if post %}{{ post.likes_count }}{% else %}-{% endif %}</td>
+        <td class="dislikes-count">{% if post %}{{ post.dislikes_count }}{% else %}-{% endif %}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+const gameRows = new Map([...document.querySelectorAll('tr[data-post-id]')]
+    .map(row => [Number(row.dataset.postId), row]));
+
+async function refreshGameReactions() {
+    try {
+        const response = await fetch("{% url 'post_reactions' %}", { cache: 'no-store' });
+        if (!response.ok) return;
+        const { posts } = await response.json();
+        for (const post of posts) {
+            const row = gameRows.get(post.id);
+            if (!row) continue;
+            row.querySelector('.likes-count').textContent = post.likes_count;
+            row.querySelector('.dislikes-count').textContent = post.dislikes_count;
+        }
+    } catch {
+        // Keep the last counts until the next successful poll.
+    } finally {
+        setTimeout(refreshGameReactions, 5000);
+    }
+}
+
+if (gameRows.size) refreshGameReactions();
+</script>

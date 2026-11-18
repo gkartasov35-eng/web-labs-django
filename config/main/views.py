@@ -69,7 +69,18 @@ def about(request):
 
 
 def games(request):
-    return render(request, 'games.html')
+    catalog = [
+        ('Cyber Adventure', 'RPG', 2025, 'GameWorld Studio'),
+        ('Space Battle', 'Шутер', 2024, 'Orbit Games'),
+    ]
+    posts = {}
+    matching_posts = get_posts_with_reactions().filter(
+        title__in=[title for title, *_ in catalog]
+    ).order_by('pk')
+    for post in matching_posts:
+        posts.setdefault(post.title, post)
+    games = [(*game, posts.get(game[0])) for game in catalog]
+    return render(request, 'games.html', {'games': games})
 
 
 def auth_view(request):

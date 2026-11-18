@@ -159,6 +159,26 @@ class LikeDislikeTests(TestCase):
         }, response.json()['posts'])
 
 
+class GameReactionTests(TestCase):
+    def test_catalog_shows_counts_for_the_same_post_as_the_reaction_feed(self):
+        post = Post.objects.get(title='Space Battle')
+        user = User.objects.create_user(username='catalog_voter')
+        LikeDislike.objects.create(user=user, post=post, value=True)
+
+        catalog = self.client.get(reverse('games'))
+        self.assertContains(catalog, f'data-post-id="{post.pk}"')
+        self.assertContains(catalog, '<td class="likes-count">1</td>', html=True)
+        self.assertContains(catalog, reverse('post_reactions'))
+
+        feed = self.client.get(reverse('post_reactions')).json()['posts']
+        self.assertIn({
+            'id': post.pk,
+            'likes_count': 1,
+            'dislikes_count': 0,
+            'user_reaction': None,
+        }, feed)
+
+
 class AjaxJsonTests(TestCase):
     def test_feedback_accepts_json(self):
         response = self.client.post(
