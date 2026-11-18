@@ -74,7 +74,25 @@ class LikeDislikeTests(TestCase):
             data=json.dumps({'post_id': self.post.id, 'value': True}),
             content_type='application/json',
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('login'))
+
+    def test_existing_user_can_sign_in_and_remove_their_old_vote(self):
+        LikeDislike.objects.create(user=self.user, post=self.post, value=True)
+        response = self.client.post(reverse('login'), {
+            'username': self.user.username,
+            'password': 'StrongPass123',
+        })
+        self.assertRedirects(response, reverse('home'))
+
+        response = self.client.post(
+            reverse('like_dislike'),
+            {'post_id': self.post.pk, 'value': True},
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['user_reaction'])
+        self.assertRedirects(self.client.post(reverse('logout')), reverse('home'))
+        self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_json_like_can_be_changed_to_dislike_without_duplicate(self):
         self.client.login(username='tester', password='StrongPass123')
@@ -161,7 +179,10 @@ class LikeDislikeTests(TestCase):
 
 class GameReactionTests(TestCase):
     def test_catalog_shows_counts_for_the_same_post_as_the_reaction_feed(self):
-        post = Post.objects.get(title='Space Battle')
+        post = Post.objects.get(catalog_key='space-battle')
+        post.title = 'Renamed Space Battle post'
+        post.save(update_fields=['title'])
+        Post.objects.create(title='Space Battle', content='Unlinked duplicate')
         user = User.objects.create_user(username='catalog_voter')
         LikeDislike.objects.create(user=user, post=post, value=True)
 

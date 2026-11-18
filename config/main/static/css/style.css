@@ -22,10 +22,12 @@ h1 {
     background-color: #007bff;
     padding: 10px 20px;
     display: flex;
+    flex-wrap: wrap;
     gap: 15px;
 }
 
-.menu a {
+.menu a,
+.menu .logout-form button {
     color: #fff;
     text-decoration: none;
     font-weight: bold;
@@ -34,7 +36,20 @@ h1 {
     transition: 0.3s;
 }
 
-.menu a:hover {
+.menu .logout-form {
+    margin: 0;
+    display: block;
+}
+
+.menu .logout-form button {
+    margin: 0;
+    background: transparent;
+    font: inherit;
+    font-weight: bold;
+}
+
+.menu a:hover,
+.menu .logout-form button:hover {
     background-color: #0056b3;
 }
 

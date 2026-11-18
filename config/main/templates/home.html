@@ -94,6 +94,8 @@ form.addEventListener('submit', async function(event) {
 });
 
 // Like/dislike отправляется через fetch: меняется только счётчик, без перезагрузки страницы.
+let reactionRevision = 0;
+let votesInFlight = 0;
 document.querySelectorAll('.reaction-btn').forEach(button => {
     button.addEventListener('click', async function() {
         const card = button.closest('.post-card');
@@ -104,6 +106,8 @@ document.querySelectorAll('.reaction-btn').forEach(button => {
             value: button.dataset.value === 'true'
         };
 
+        reactionRevision++;
+        votesInFlight++;
         buttons.forEach(item => item.disabled = true);
         status.textContent = '';
         try {
@@ -131,6 +135,7 @@ document.querySelectorAll('.reaction-btn').forEach(button => {
         } catch (error) {
             status.textContent = error.message || 'Не удалось связаться с сервером.';
         } finally {
+            votesInFlight--;
             buttons.forEach(item => item.disabled = false);
         }
     });
@@ -156,20 +161,25 @@ function updatePostReaction(postId, reaction) {
 
 async function refreshReactions() {
     try {
+        if (votesInFlight) return;
+        const revision = reactionRevision;
         const response = await fetch("{% url 'post_reactions' %}", { cache: 'no-store' });
         if (!response.ok) return;
 
         const data = await response.json();
+        // A vote started after this poll, so its response may be newer.
+        if (revision !== reactionRevision) return;
         data.posts.forEach(post => {
             updatePostCounters(post.id, post.likes_count, post.dislikes_count);
             updatePostReaction(post.id, post.user_reaction);
         });
     } catch (error) {
         // Keep the last displayed counts when the server is temporarily unreachable.
+    } finally {
+        setTimeout(refreshReactions, 5000);
     }
 }
 
 refreshReactions();
-setInterval(refreshReactions, 5000);
 </script>
 {% endblock %}

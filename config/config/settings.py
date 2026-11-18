@@ -109,7 +109,7 @@ if find_spec('whitenoise') and not DEBUG:
         },
     }
 
-LOGIN_URL = '/auth/'
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

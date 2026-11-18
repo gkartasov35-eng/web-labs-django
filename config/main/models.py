@@ -23,6 +23,7 @@ class UserProfile(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=100)
     content = models.TextField()
+    catalog_key = models.SlugField(max_length=50, unique=True, null=True, blank=True)
 
     def __str__(self):
         return self.title

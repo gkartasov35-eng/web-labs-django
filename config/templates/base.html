@@ -11,7 +11,15 @@
 
 <!-- Меню -->
 <div class="menu">
-    <a href="/auth/">Регистрация</a>
+    {% if user.is_authenticated %}
+    <form action="{% url 'logout' %}" method="post" class="logout-form">
+        {% csrf_token %}
+        <button type="submit">Выйти</button>
+    </form>
+    {% else %}
+    <a href="{% url 'auth' %}">Регистрация</a>
+    <a href="{% url 'login' %}">Войти</a>
+    {% endif %}
     <a href="/">Главная</a>
     <a href="/about/">О сайте</a>
     <a href="/games/">Игры</a>

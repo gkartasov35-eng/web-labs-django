@@ -70,16 +70,13 @@ def about(request):
 
 def games(request):
     catalog = [
-        ('Cyber Adventure', 'RPG', 2025, 'GameWorld Studio'),
-        ('Space Battle', 'Шутер', 2024, 'Orbit Games'),
+        ('cyber-adventure', 'Cyber Adventure', 'RPG', 2025, 'GameWorld Studio'),
+        ('space-battle', 'Space Battle', 'Шутер', 2024, 'Orbit Games'),
     ]
-    posts = {}
-    matching_posts = get_posts_with_reactions().filter(
-        title__in=[title for title, *_ in catalog]
-    ).order_by('pk')
-    for post in matching_posts:
-        posts.setdefault(post.title, post)
-    games = [(*game, posts.get(game[0])) for game in catalog]
+    posts = get_posts_with_reactions().in_bulk(
+        [key for key, *_ in catalog], field_name='catalog_key'
+    )
+    games = [(*game, posts.get(key)) for key, *game in catalog]
     return render(request, 'games.html', {'games': games})
 
 
@@ -133,7 +130,7 @@ def feedback(request):
     return render(request, "main/feedback.html")
 
 
-@login_required
+@login_required(redirect_field_name=None)
 @require_POST
 def like_dislike(request):
     try:
